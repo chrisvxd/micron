@@ -6,7 +6,7 @@ except ImportError:
     from distutils.core import setup
 
 setup(
-    name='Micron',
+    name='micron',
     version='0.0.1',
     author='Chris Villa',
     author_email='chrisvilla@me.com',
