@@ -22,4 +22,7 @@ setup(
         'Operating System :: OS Independent',
         'Topic :: Internet :: WWW/HTTP',
     ],
+    packages=[
+        'micron'
+    ]
 )
