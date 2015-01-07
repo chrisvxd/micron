@@ -10,7 +10,6 @@ setup(
     version='0.0.1',
     author='Chris Villa',
     author_email='chrisvilla@me.com',
-    packages=[],
     url='https://github.com/chrisvxd/micron',
     license='MIT',
     description='Microservice message library',
