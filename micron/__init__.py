@@ -1,7 +1,7 @@
 import json
 import time
 import threading
-
+import sys
 
 def none_to_blank(val=None, _list=None, _dict=None):
     """
@@ -36,28 +36,36 @@ class ProcessMsg(threading.Thread):
         self.db_key_prefix = db_key_prefix
         super(ProcessMsg, self).__init__(*args, **kwargs)
 
-    def run(self, *args, **kwargs):
-        try:
-            self.msg_dict['obj'] = self.func(meta=self.data, **self.data['obj'])
-            self.msg_dict['obj'] = none_to_blank(_dict=self.msg_dict['obj'])
-            self.msg = json.dumps(self.msg_dict)
-        except Exception as e:
-            self.msg_dict['status_code'] = 500
-            self.msg_dict['error'] = {
-                'internal_message': str(e),
-                'user_message': "Something went wrong!",
-                'func': self.func.__name__,
-                'msg_key': self.msg_key if self.msg_key else None,
-            }
-            self.msg = json.dumps(self.msg_dict)
-            self.micron.msg('msg:error', self.msg)
-
+    def msg_all_keys(self):
         if self.msg_key:
             self.micron.msg(self.msg_key, self.msg)
 
         if self.db_key_prefix:
             self.micron.r.set(self.db_key_prefix + self.data['id'], self.msg)
             self.micron.r.expire(self.db_key_prefix + self.data['id'], self.micron.redis_expiration)
+
+    def run(self, *args, **kwargs):
+        try:
+            self.msg_dict['obj'] = self.func(meta=self.data, **self.data['obj'])
+            self.msg_dict['obj'] = none_to_blank(_dict=self.msg_dict['obj'])
+            self.msg = json.dumps(self.msg_dict)
+            self.msg_all_keys()
+        except Exception as e:
+            self.msg_dict['status_code'] = 500
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            self.msg_dict['error'] = {
+                'internal_message': str(e),
+                'exc_type': str(exc_type),
+                'exc_value': str(exc_value),
+                'exc_traceback': str(exc_traceback),
+                'user_message': "Something went wrong!",
+                'func': self.func.__name__,
+                'msg_key': self.msg_key if self.msg_key else None,
+            }
+            self.msg = json.dumps(self.msg_dict)
+            self.micron.msg('msg:error', self.msg)
+            self.msg_all_keys()
+            raise
 
         self.micron.active_threads -= 1
 
@@ -83,7 +91,6 @@ class Micron(object):
             self.r.delete(key)
             for hook_id in hook_ids:
                 self.r.rpush(key, hook_id)
-
 
     def map(self, request_msg_key, fn, response_msg_key=None,
             db_key_prefix=None):
