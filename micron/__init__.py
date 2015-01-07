@@ -65,6 +65,7 @@ class ProcessMsg(threading.Thread):
             self.msg = json.dumps(self.msg_dict)
             self.micron.msg('msg:error', self.msg)
             self.msg_all_keys()
+            self.micron.active_threads -= 1
             raise
 
         self.micron.active_threads -= 1
