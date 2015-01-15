@@ -3,6 +3,11 @@ import time
 import threading
 import sys
 
+
+class MicronException(Exception):
+    pass
+
+
 def none_to_blank(val=None, _list=None, _dict=None):
     """
     Converts None values to empty strings
@@ -53,12 +58,15 @@ class ProcessMsg(threading.Thread):
         except Exception as e:
             self.msg_dict['status_code'] = 500
             exc_type, exc_value, exc_traceback = sys.exc_info()
+
+            default_error = {
+                'internal_message': exc_value.message,
+                'user_message': 'Unknown server error'
+            }
+
             self.msg_dict['error'] = {
-                'internal_message': str(e),
                 'exc_type': str(exc_type),
-                'exc_value': str(exc_value),
-                'exc_traceback': str(exc_traceback),
-                'user_message': "Something went wrong!",
+                'exc_value': exc_value.message if isinstance(e, MicronException) else default_error,
                 'func': self.func.__name__,
                 'msg_key': self.msg_key if self.msg_key else None,
             }
