@@ -7,7 +7,7 @@ except ImportError:
 
 setup(
     name='micron',
-    version='0.0.4',
+    version='0.0.5',
     author='Chris Villa',
     author_email='chrisvilla@me.com',
     url='https://github.com/chrisvxd/micron',
