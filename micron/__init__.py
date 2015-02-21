@@ -5,8 +5,22 @@ import sys
 
 
 class MicronException(Exception):
-    pass
+    def __init__(self, user_message, internal_message, context={}, *args, **kwargs):
+        self.user_message = user_message
+        self.internal_message = internal_message
+        self.context = context
 
+        return super(MicronException, self).__init__(self, *args, **kwargs)
+
+    def as_dict(self, *args, **kwargs):
+        return {
+            'user_message': self.user_message,
+            'internal_message': self.internal_message,
+            'context': self.context
+        }
+
+    def __str__(self, *args, **kwargs):
+        return self.internal_message
 
 def none_to_blank(val=None, _list=None, _dict=None):
     """
@@ -59,17 +73,22 @@ class ProcessMsg(threading.Thread):
             self.msg_dict['status_code'] = 500
             exc_type, exc_value, exc_traceback = sys.exc_info()
 
-            default_error = {
-                'internal_message': exc_value.message,
-                'user_message': 'Unknown server error'
-            }
+            if isinstance(e, MicronException):
+                error = e.as_dict()
+            else:
+                error = {
+                    'internal_message': str(exc_value.message),
+                    'user_message': 'Unknown server error',
+                    'context': {}
+                }
 
             self.msg_dict['error'] = {
                 'exc_type': str(exc_type),
-                'exc_value': str(exc_value.message) if isinstance(e, MicronException) else str(default_error),
                 'func': self.func.__name__,
                 'msg_key': self.msg_key if self.msg_key else None,
             }
+            self.msg_dict['error'].update(error)
+
             self.msg = json.dumps(self.msg_dict)
             self.micron.msg('msg:error', self.msg)
             self.msg_all_keys()
