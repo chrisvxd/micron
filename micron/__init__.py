@@ -66,7 +66,7 @@ class ProcessMsg(threading.Thread):
 
             self.msg_dict['error'] = {
                 'exc_type': str(exc_type),
-                'exc_value': exc_value.message if isinstance(e, MicronException) else default_error,
+                'exc_value': str(exc_value.message) if isinstance(e, MicronException) else str(default_error),
                 'func': self.func.__name__,
                 'msg_key': self.msg_key if self.msg_key else None,
             }
